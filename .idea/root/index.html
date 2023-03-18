@@ -27,7 +27,7 @@
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Radisu van de bal
+    // Radius van de bal
     const ballRadius = 10;
 
     // Beginpunt van de bal
@@ -38,6 +38,13 @@
     let dx = 2;
     let dy = -2;
 
+    const paddleHeight = 10;
+    const paddleWidth = 75;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+
+    let rightPressed = false;
+    let leftPressed = false;
+
     // tekent de bal
     function drawBall() {
         ctx.beginPath();
@@ -47,31 +54,61 @@
         ctx.closePath();
     }
 
+    function drawPaddle() {
+        ctx.beginPath();
+        ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+        ctx.fillStyle = "#0095DD";
+        ctx.fill();
+        ctx.closePath();
+    }
+
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawBall();
+        drawPaddle();
         // Als de y-positie groter is dan de hoogte van het canvas ( canvas.height = 320px ) dan moet de beweging omgekeerd
         // worden net als hieroven wordt beschreven.
         // Wanneer de y waarde van de bal kleiner is dan 0 veranderd de richting op de y-axis door hem gelijk te zetten aan
         // zichzelf, omgekeerd. Als de bal omhoog beweegt met 2 pixels per frame, dan beweegt hij nu "omhoog" met -2 pixels,
         // wat gelijk staat aan naar beneden bewegen met 2 pixels per frame.
-        if (y + dy > canvas.height || y + dy < 0) {
+        if (y + dy > canvas.height - ballRadius || y + dy < ballRadius) {
             dy = -dy;
         }
 
         // Zelfde als hierboven maar dan met de linker en rechterkant van het canvas.
-        if (x + dx > canvas.width || x + dx < 0) {
+        if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
             dx = -dx;
         }
 
         x += dx;
         y += dy;
+
+        if (rightPressed) {
+            paddleX = Math.min(paddleX + 7, canvas.width - paddleWidth);
+        } else if (leftPressed) {
+            paddleX = Math.max(paddleX - 7, 0);
+        }
+    }
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    function keyDownHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = true;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = true;
+        }
+    }
+
+    function keyUpHandler(e) {
+        if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = false;
+        } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = false;
+        }
     }
 
     setInterval(draw, 10);
-
-
-
 
 </script>
 </body>
