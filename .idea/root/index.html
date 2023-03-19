@@ -27,10 +27,10 @@
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Radius van de bal
+    // Radius van de bal, meer radius is grotere bal
     const ballRadius = 10;
 
-    // Beginpunt van de bal
+    // Beginpunt van de bal, aangegeven met x en y coordinaten
     let x = canvas.width / 2;
     let y = canvas.height - 30;
 
@@ -56,6 +56,7 @@
     const brickOffsetTop = 30;
     const brickOffsetLeft = 30;
 
+    // for loop om de bricks aan te maken, deze for loop loopt door de rows en columns om de bricks te genereren
     const bricks = [];
     for (let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
@@ -64,11 +65,13 @@
         }
     }
 
+    // beginscore van het spel is natuurlijk 0
     let score = 0;
 
+    // aantal levens begint op 3
     let lives = 3;
 
-
+    // functie om de bricks aan te maken en ze verschillende plekken op het canvas te geven
     function drawBricks() {
         for (let c = 0; c < brickColumnCount; c++) {
             for (let r = 0; r < brickRowCount; r++) {
@@ -106,9 +109,9 @@
         ctx.closePath();
     }
 
-    // tekent de ball en de paddle
+    // tekent de ball, paddle, bricks, score en lives
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // elke 10ms word het canvas gecleared zodat voorgaande frames niet zichtbaar blijven
         drawBricks();
         drawBall();
         drawPaddle();
@@ -116,7 +119,6 @@
         drawLives();
         collisionDetection();
         // Als de y-positie groter is dan de hoogte van het canvas ( canvas.height = 320px ) dan moet de beweging omgekeerd
-        // worden net als hierboven wordt beschreven.
         // Wanneer de y waarde van de bal kleiner is dan 0 veranderd de richting op de y-axis door hem gelijk te zetten aan
         // zichzelf, omgekeerd. Als de bal omhoog beweegt met 2 pixels per frame, dan beweegt hij nu "omhoog" met -2 pixels,
         // wat gelijk staat aan naar beneden bewegen met 2 pixels per frame.
@@ -127,10 +129,10 @@
                 dy = -dy;
             } else {
                 lives--;
-                if (!lives) {
+                if (!lives) { // wanneer je levens op zijn is het game over
                     alert("GAME OVER");
                     document.location.reload();
-                    clearInterval(interval); // Needed for Chrome to end game
+                    clearInterval(interval); // nodig voor Chrome om de game te eindigen
                 } else {
                     x = canvas.width / 2;
                     y = canvas.height - 30;
@@ -162,6 +164,7 @@
     // event listeners, keydown/keyup activeert bijbehorende functie
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
+    // event listener voor muis movement
     document.addEventListener("mousemove", mouseMoveHandler, false);
     function mouseMoveHandler(e) {
         const relativeX = e.clientX - canvas.offsetLeft;
@@ -185,6 +188,8 @@
             leftPressed = false;
         }
     }
+    // vergelijk de coordinaten van elke brick met die van de bal en past de status aan naar 1 als een brick wordt
+    // geraakt door de bal.
     function collisionDetection() {
         for (let c = 0; c < brickColumnCount; c++) {
             for (let r = 0; r < brickRowCount; r++) {
@@ -199,10 +204,10 @@
                         dy = -dy;
                         b.status = 0;
                         score++;
-                        if (score === brickRowCount * brickColumnCount) {
+                        if (score === brickRowCount * brickColumnCount) { // wanneer de score gelijk is aan het aantal bricks krijg je de melding dan je hebt gewonnen
                             alert("YOU WIN, CONGRATULATIONS!");
-                            document.location.reload();
-                            clearInterval(interval); // Needed for Chrome to end game
+                            document.location.reload(); // pagina word herladen wanneer je op de alert button klikt
+                            clearInterval(interval); // nodig voor Chrome om de game te eindigen
                         }
                     }
                 }
@@ -211,13 +216,14 @@
     }
 
 
-
+    // functie om de score op het canvas te tekenen
     function drawScore() {
         ctx.font = "16px Arial";
         ctx.fillStyle = "#0095DD";
         ctx.fillText(`Score: ${score}`, 8, 20);
     }
 
+    // functie om het aantal levens op het canvas te tekenen
     function drawLives() {
         ctx.font = "16px Arial";
         ctx.fillStyle = "#0095DD";
@@ -226,7 +232,7 @@
 
 
 
-
+    // Elke 10ms word er een frame getekend.
     const interval = setInterval(draw, 10);
 
 </script>
