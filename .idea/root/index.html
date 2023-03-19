@@ -38,14 +38,57 @@
     let dx = 2;
     let dy = -2;
 
+    // paddle dimensions
     const paddleHeight = 10;
     const paddleWidth = 75;
     let paddleX = (canvas.width - paddleWidth) / 2;
 
+    // default state voor buttons is false omdat ze niet standaard ingedrukt zijn
     let rightPressed = false;
     let leftPressed = false;
 
-    // tekent de bal
+    // blokjes om kapot te maken
+    const brickRowCount = 3;
+    const brickColumnCount = 5;
+    const brickWidth = 75;
+    const brickHeight = 20;
+    const brickPadding = 10;
+    const brickOffsetTop = 30;
+    const brickOffsetLeft = 30;
+
+    const bricks = [];
+    for (let c = 0; c < brickColumnCount; c++) {
+        bricks[c] = [];
+        for (let r = 0; r < brickRowCount; r++) {
+            bricks[c][r] = { x: 0, y: 0, status: 1 };
+        }
+    }
+
+    let score = 0;
+
+    let lives = 3;
+
+
+    function drawBricks() {
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                if (bricks[c][r].status === 1) {
+                    const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                    const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                    bricks[c][r].x = brickX;
+                    bricks[c][r].y = brickY;
+                    ctx.beginPath();
+                    ctx.rect(brickX, brickY, brickWidth, brickHeight);
+                    ctx.fillStyle = "#0095DD";
+                    ctx.fill();
+                    ctx.closePath();
+                }
+            }
+        }
+    }
+
+
+    // ball properties
     function drawBall() {
         ctx.beginPath();
         ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
@@ -54,6 +97,7 @@
         ctx.closePath();
     }
 
+    // paddle properties
     function drawPaddle() {
         ctx.beginPath();
         ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
@@ -62,18 +106,41 @@
         ctx.closePath();
     }
 
+    // tekent de ball en de paddle
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
         drawBall();
         drawPaddle();
+        drawScore();
+        drawLives();
+        collisionDetection();
         // Als de y-positie groter is dan de hoogte van het canvas ( canvas.height = 320px ) dan moet de beweging omgekeerd
-        // worden net als hieroven wordt beschreven.
+        // worden net als hierboven wordt beschreven.
         // Wanneer de y waarde van de bal kleiner is dan 0 veranderd de richting op de y-axis door hem gelijk te zetten aan
         // zichzelf, omgekeerd. Als de bal omhoog beweegt met 2 pixels per frame, dan beweegt hij nu "omhoog" met -2 pixels,
         // wat gelijk staat aan naar beneden bewegen met 2 pixels per frame.
-        if (y + dy > canvas.height - ballRadius || y + dy < ballRadius) {
+        if (y + dy < ballRadius) {
             dy = -dy;
+        } else if (y + dy > canvas.height - ballRadius) {
+            if (x > paddleX && x < paddleX + paddleWidth) {
+                dy = -dy;
+            } else {
+                lives--;
+                if (!lives) {
+                    alert("GAME OVER");
+                    document.location.reload();
+                    clearInterval(interval); // Needed for Chrome to end game
+                } else {
+                    x = canvas.width / 2;
+                    y = canvas.height - 30;
+                    dx = 2;
+                    dy = -2;
+                    paddleX = (canvas.width - paddleWidth) / 2;
+                }
+            }
         }
+
 
         // Zelfde als hierboven maar dan met de linker en rechterkant van het canvas.
         if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
@@ -83,6 +150,8 @@
         x += dx;
         y += dy;
 
+        // paddle beweegt 7 pixels bij toetsaanslag, met min en max position gerelateerd aan de canvas width en
+        // start positie (canvas.width - paddleWidth) en 0
         if (rightPressed) {
             paddleX = Math.min(paddleX + 7, canvas.width - paddleWidth);
         } else if (leftPressed) {
@@ -90,8 +159,18 @@
         }
     }
 
+    // event listeners, keydown/keyup activeert bijbehorende functie
     document.addEventListener("keydown", keyDownHandler, false);
     document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+    function mouseMoveHandler(e) {
+        const relativeX = e.clientX - canvas.offsetLeft;
+        if (relativeX > 0 && relativeX < canvas.width) {
+            paddleX = relativeX - paddleWidth / 2;
+        }
+    }
+
+    // wanneer de links/rechts button word ingedrukt veranderd de waarde van de pressed variabel naar true
     function keyDownHandler(e) {
         if (e.key === "Right" || e.key === "ArrowRight") {
             rightPressed = true;
@@ -99,7 +178,6 @@
             leftPressed = true;
         }
     }
-
     function keyUpHandler(e) {
         if (e.key === "Right" || e.key === "ArrowRight") {
             rightPressed = false;
@@ -107,8 +185,49 @@
             leftPressed = false;
         }
     }
+    function collisionDetection() {
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                const b = bricks[c][r];
+                if (b.status === 1) {
+                    if (
+                        x > b.x &&
+                        x < b.x + brickWidth &&
+                        y > b.y &&
+                        y < b.y + brickHeight
+                    ) {
+                        dy = -dy;
+                        b.status = 0;
+                        score++;
+                        if (score === brickRowCount * brickColumnCount) {
+                            alert("YOU WIN, CONGRATULATIONS!");
+                            document.location.reload();
+                            clearInterval(interval); // Needed for Chrome to end game
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-    setInterval(draw, 10);
+
+
+    function drawScore() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText(`Score: ${score}`, 8, 20);
+    }
+
+    function drawLives() {
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "#0095DD";
+        ctx.fillText(`Lives: ${lives}`, canvas.width - 65, 20);
+    }
+
+
+
+
+    const interval = setInterval(draw, 10);
 
 </script>
 </body>
